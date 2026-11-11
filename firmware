@@ -1,0 +1,239 @@
+#include <FastLED.h>
+
+#define LED_PIN 6
+#define NUM_LEDS 21
+#define BRIGHTNESS_MIN 1
+#define BRIGHTNESS_MAX 40
+#define ANIMATION_COUNT 10
+#define AUTO_MODE_INDEX 1
+
+// Pines para botones
+#define BTN_ANIMATION 2
+#define BTN_SLOW 3
+#define BTN_FAST 4
+
+#define LED_TYPE WS2812B
+#define COLOR_ORDER RGB
+
+CRGB leds[NUM_LEDS];
+uint8_t currentAnimation = 0;
+int animationSpeed = 100;  // Velocidad base de animaciones
+int brightness = 5;      // Brillo inicial
+bool autoMode = false;
+
+unsigned long lastUpdate = 0;
+unsigned long animationTimer = 0;
+
+// Estado para animaciones
+int animationStep = 0;
+int animationDirection = 1;
+
+void setup() {
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+  FastLED.setBrightness(brightness);
+
+  pinMode(BTN_ANIMATION, INPUT_PULLUP);
+  pinMode(BTN_SLOW, INPUT_PULLUP);
+  pinMode(BTN_FAST, INPUT_PULLUP);
+}
+
+void loop() {
+  handleButtons();
+  
+  if (autoMode) {
+    currentAnimation = millis() / 10000 % ANIMATION_COUNT;  // Cambia animaciones cada 5s
+  }
+
+  unsigned long currentTime = millis();
+  if (currentTime - lastUpdate >= animationSpeed) {
+    lastUpdate = currentTime;
+    runAnimation();
+  }
+}
+
+void handleButtons() {
+  if (digitalRead(BTN_ANIMATION) == LOW) {
+    delay(50);
+    if (digitalRead(BTN_ANIMATION) == LOW) {
+      autoMode = false;
+      currentAnimation = (currentAnimation + 1) % (ANIMATION_COUNT + 1);
+      if (currentAnimation == AUTO_MODE_INDEX) {
+        autoMode = true;
+      }
+      while (digitalRead(BTN_ANIMATION) == LOW);  // Esperar a que se suelte el botón
+    }
+  }
+
+  if (digitalRead(BTN_SLOW) == LOW) {
+    delay(50);
+    if (digitalRead(BTN_SLOW) == LOW) {
+      animationSpeed = min(animationSpeed + 25, 1000);
+      while (digitalRead(BTN_SLOW) == LOW) {
+        if (brightness > BRIGHTNESS_MIN) {
+          brightness--;
+          FastLED.setBrightness(brightness);
+          FastLED.show();
+          delay(60);
+        }
+      }
+    }
+  }
+
+  if (digitalRead(BTN_FAST) == LOW) {
+    delay(50);
+    if (digitalRead(BTN_FAST) == LOW) {
+      animationSpeed = max(animationSpeed - 25, 10);
+      while (digitalRead(BTN_FAST) == LOW) {
+        if (brightness < BRIGHTNESS_MAX) {
+          brightness++;
+          FastLED.setBrightness(brightness);
+          FastLED.show();
+          delay(60);
+        }
+      }
+    }
+  }
+}
+
+void runAnimation() {
+  switch (currentAnimation) {
+    default: break;
+    case 0: spark(); break;
+    case 1: sparkEffect(); break;
+    case 2: waterDropEffect(); break;
+    case 3: rainbowTrailEffect(); break;
+    case 4: colorWipe(); break;
+    case 5: colorWipe2(); break;
+    case 6: rainbowCycle(); break;
+    case 7: strobe(); break;
+    case 8: runningLights(CRGB::Blue); break;
+    case 9: carouselEffect(); break;
+  }
+}
+
+void spark() {
+  static int position = 0;
+  for (int i = 0; i < NUM_LEDS; i++) {
+    leds[i] = CHSV(random(256), random(255), random(255));
+    leds[i].fadeToBlackBy(400 * abs((i + position) % NUM_LEDS - NUM_LEDS / 2) / (NUM_LEDS / 10));
+  }
+  position = (position + 1) % NUM_LEDS;
+  FastLED.show();
+  delay (animationSpeed*5);
+}
+
+void sparkEffect() {
+  for (int i = 0; i < NUM_LEDS; i++) leds[i].fadeToBlackBy(5);
+  for (int i = 0; i < 3; i++) {
+    leds[random(NUM_LEDS)] = CHSV(random(256), 255, random(100, 255));
+  }
+  FastLED.show();
+}
+
+void waterDropEffect() {
+  static int position = 0;
+  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  leds[position] = CHSV(random(256), 255, 255);
+  int secondaryPosition = (position +9) % NUM_LEDS; // Asegurarse de que esté dentro del rango
+  leds[secondaryPosition] = CHSV(random(256), 255, 255); // Color aleatorio para el segundo LED
+
+  int tercerPosicion = (position +4) % NUM_LEDS; // Asegurarse de que esté dentro del rango
+  leds[tercerPosicion] = CHSV(random(256), 255, 120); // Color aleatorio para el segundo LED
+
+  int cuartaPosicion = (position +6) % NUM_LEDS; // Asegurarse de que esté dentro del rango
+  leds[cuartaPosicion] = CHSV(random(256), 255, 255); // Color aleatorio para el segundo LED
+
+  int quintaPosicion = (position +19) % NUM_LEDS; // Asegurarse de que esté dentro del rango
+  leds[quintaPosicion] = CHSV(random(256), 255, 255); // Color aleatorio para el segundo LED
+
+  int sextaPosicion = (position +12) % NUM_LEDS; // Asegurarse de que esté dentro del rango
+  leds[sextaPosicion] = CHSV(random(256), 255, 255); // Color aleatorio para el segundo LED
+
+  int septimaPosicion = (position +16) % NUM_LEDS; // Asegurarse de que esté dentro del rango
+  leds[septimaPosicion] = CHSV(random(256), 255, 255); // Color aleatorio para el segundo LED
+
+  int octavaPosicion = (position +5) % NUM_LEDS; // Asegurarse de que esté dentro del rango
+  leds[octavaPosicion] = CHSV(random(256), 255, 255); // Color aleatorio para el segundo LED
+
+  int novenaPosicion = (position +11) % NUM_LEDS; // Asegurarse de que esté dentro del rango
+  leds[novenaPosicion] = CHSV(random(256), 255, 255); // Color aleatorio para el segundo LED
+
+  int decimaPosicion = (position +7) % NUM_LEDS; // Asegurarse de que esté dentro del rango
+  leds[decimaPosicion] = CHSV(random(256), 255, 255); // Color aleatorio para el segundo LED
+
+  position = (position + 8) % NUM_LEDS;
+  FastLED.show();
+  delay (animationSpeed*8);
+}
+
+void rainbowTrailEffect() {
+  static int offset = 0;
+  for (int i = 0; i < NUM_LEDS; i++) {
+    leds[i] = CHSV((i + offset) * 255 / NUM_LEDS, 255, 255);
+  }
+  offset = (offset + 1) % 256;
+  FastLED.show();
+}
+
+void colorWipe() {
+  static int index = 0;
+  leds[index] = CHSV(random(256), 255, 255);
+  index = (index + 1) % NUM_LEDS;
+  if(index == 0){
+    FastLED.clear();
+  }    
+  else{
+    FastLED.show();
+  }
+  //FastLED.show();
+  //FastLED.clear();
+}
+
+void colorWipe2() {
+  static int index = 0;
+  leds[index] = CHSV(index * 10, 255, 255); // Gradiente de color basado en el índice
+  index = (index + 1) % NUM_LEDS;
+  FastLED.show();
+  FastLED.clear();
+}
+
+void rainbowCycle() {
+  static int offset = 0;
+  for (int i = 0; i < NUM_LEDS; i++) {
+    leds[i] = CHSV((i * 256 / NUM_LEDS + offset) & 255, 255, 255);
+  }
+  offset = (offset + 10) % 256;
+  FastLED.show();
+}
+
+void strobe() {
+  static bool on = false;
+  fill_solid(leds, NUM_LEDS, on ? CHSV(random(256), random(255), random(255)) : CHSV(random(255), 255, 255));
+  on = !on;
+  FastLED.show();
+  delay (200);
+}
+
+void runningLights(CRGB color) {
+  static int position = 0;
+  for (int i = 0; i < NUM_LEDS; i++) {
+    leds[i] = color;
+    leds[i].fadeToBlackBy(400 * abs((i + position) % NUM_LEDS - NUM_LEDS / 2) / (NUM_LEDS / 2));
+  }
+  position = (position + 1) % NUM_LEDS;
+  FastLED.show();
+}
+
+void carouselEffect() {
+  static int groupOffset = 0;
+  const int groupSize = 3;
+  const CRGB colors[7] = {CRGB::Red, CRGB::Orange, CRGB::Yellow, CRGB::Green, CRGB::Blue, CRGB::Indigo, CRGB::Violet};
+  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  for (int i = 0; i < NUM_LEDS; i += groupSize) {
+    for (int j = 0; j < groupSize; j++) {
+      leds[(i + j + groupOffset) % NUM_LEDS] = colors[(i / groupSize) % 7];
+    }
+  }
+  groupOffset = (groupOffset + 1) % NUM_LEDS;
+  FastLED.show();
+}
